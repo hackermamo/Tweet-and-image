@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - TweetAI Pro{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Welcome Section -->
+    <section style="margin-bottom: 3rem;">
+        <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem; padding: 1rem;">
+                <div style="display: flex; align-items: center; gap: 2rem;">
+                    <div class="user-avatar xl">{{ current_user.username[0].upper() }}</div>
+                    <div>
+                        <h1 style="font-size: 2.5rem; font-weight: 900; color: var(--text-primary); margin-bottom: 0.5rem;">
+                            Welcome back, {{ current_user.username }}!
+                        </h1>
+                        <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 1rem;">
+                            Ready to create some amazing content today?
+                        </p>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <div class="badge badge-success">
+                                <i class="fas fa-check-circle"></i> Pro Account
+                            </div>
+                            <div class="badge badge-info">
+                                <i class="fas fa-bolt"></i> AI Credits: Unlimited
+                            </div>
+                            <div class="badge badge-warning">
+                                <i class="fas fa-clock"></i> Last login: Just now
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="background: var(--success-gradient); color: white; padding: 1rem 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+                        <div style="font-size: 1.5rem; font-weight: 800;">{{ current_user.username }}</div>
+                        <div style="font-size: 0.875rem; opacity: 0.9;">User ID: {{ current_user.id }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- User Stats -->
+    <section style="margin-bottom: 3rem;">
+        <div class="grid grid-cols-4" style="gap: 2rem;">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-number" id="totalContent">0</div>
+                <div class="stat-label">Total Tweets</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +12% this week
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--success-gradient);">
+                    <i class="fas fa-share"></i>
+                </div>
+                <div class="stat-number" id="publishedContent">0</div>
+                <div class="stat-label">Published</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +8% this week
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--warning-gradient);">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="stat-number" id="generatedImages">0</div>
+                <div class="stat-label">Images Created</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +25% this week
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--danger-gradient);">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="stat-number" id="engagementRate">95%</div>
+                <div class="stat-label">Engagement</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +15% this week
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <div class="grid grid-cols-3" style="gap: 2rem; align-items: start;">
+        <!-- AI Tweet Generator -->
+        <div style="grid-column: span 2;">
+            <div class="glass-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-magic"></i>
+                        AI Tweet & Image Generator
+                    </h2>
+                    <div class="badge badge-success">
+                        <i class="fas fa-bolt"></i> Powered by AI
+                    </div>
+                </div>
+                
+                <form id="tweetGeneratorForm">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-lightbulb"></i> Tweet Title/Topic
+                        </label>
+                        <input 
+                            type="text" 
+                            id="tweetTitle" 
+                            class="form-control" 
+                            placeholder="Enter your tweet title or main topic..."
+                            required
+                        />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-edit"></i> Detailed Description
+                        </label>
+                        <textarea 
+                            id="tweetPrompt" 
+                            class="form-control" 
+                            rows="4" 
+                            placeholder="Describe your topic in detail. Be specific for better AI results..."
+                            required
+                        ></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-3" style="gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label class="form-label">Tone</label>
+                            <select class="form-control" id="tweetTone">
+                                <option value="professional">Professional</option>
+                                <option value="casual">Casual</option>
+                                <option value="humorous">Humorous</option>
+                                <option value="inspirational">Inspirational</option>
+                                <option value="educational">Educational</option>
+                                <option value="promotional">Promotional</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Length</label>
+                            <select class="form-control" id="tweetLength">
+                                <option value="short">Short (< 100 chars)</option>
+                                <option value="medium" selected>Medium (100-200 chars)</option>
+                                <option value="long">Long (200-280 chars)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Category</label>
+                            <select class="form-control" id="tweetCategory">
+                                <option value="general">General</option>
+                                <option value="tech">Technology</option>
+                                <option value="business">Business</option>
+                                <option value="lifestyle">Lifestyle</option>
+                                <option value="education">Education</option>
+                                <option value="entertainment">Entertainment</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; padding: 1.5rem; background: var(--bg-primary); border-radius: var(--radius-lg);">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-secondary);">
+                            <input type="checkbox" id="includeHashtags" checked style="margin: 0; transform: scale(1.2);">
+                            <i class="fas fa-hashtag"></i> Include hashtags
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-secondary);">
+                            <input type="checkbox" id="includeEmojis" checked style="margin: 0; transform: scale(1.2);">
+                            <i class="fas fa-smile"></i> Add emojis
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-secondary);">
+                            <input type="checkbox" id="generateImage" checked style="margin: 0; transform: scale(1.2);">
+                            <i class="fas fa-image"></i> Generate image
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-secondary);">
+                            <input type="checkbox" id="autoSave" checked style="margin: 0; transform: scale(1.2);">
+                            <i class="fas fa-save"></i> Auto-save
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-full" style="padding: 1.25rem; font-size: 1rem;">
+                        <span class="btn-text">
+                            <i class="fas fa-wand-magic-sparkles"></i> Generate Tweet & Image with AI
+                        </span>
+                        <span class="loading" style="display: none;"></span>
+                    </button>
+                </form>
+                
+                <!-- Generated Content Display -->
+                <div id="generatedContent" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-light);">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem;">
+                        <i class="fas fa-sparkles"></i> Generated Content
+                    </h3>
+                    
+                    <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: var(--radius-lg); padding: 2rem; border-left: 4px solid #667eea; margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                <i class="fas fa-twitter"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-primary);">{{ current_user.username }}</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">@{{ current_user.username.lower() }}</div>
+                            </div>
+                        </div>
+                        <p id="generatedTweetText" style="color: var(--text-primary); line-height: 1.6; margin: 0; font-size: 1.1rem; font-weight: 500;"></p>
+                        <div style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+                            <span id="characterCount">0</span>/280 characters
+                        </div>
+                    </div>
+                    
+                    <div id="generatedImageContainer" style="display: none; margin-bottom: 1.5rem; text-align: center;">
+                        <div style="background: white; padding: 1rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+                            <img id="generatedImageDisplay" style="max-width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button onclick="copyGeneratedTweet()" class="btn btn-secondary">
+                            <i class="fas fa-copy"></i> Copy Tweet
+                        </button>
+                        <button onclick="saveAsDraft()" class="btn btn-info">
+                            <i class="fas fa-save"></i> Save Draft
+                        </button>
+                        <button onclick="publishTweet()" class="btn btn-success">
+                            <i class="fas fa-paper-plane"></i> Publish Now
+                        </button>
+                        <button onclick="regenerateTweet()" class="btn btn-warning">
+                            <i class="fas fa-redo"></i> Regenerate
+                        </button>
+                        <button onclick="editTweet()" class="btn btn-dark">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Quick Actions -->
+            <div class="glass-card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: 1.25rem;">
+                        <i class="fas fa-bolt"></i>
+                        Quick Actions
+                    </h3>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button onclick="openTemplateModal()" class="btn btn-primary w-full">
+                        <i class="fas fa-file-alt"></i> Use Template
+                    </button>
+                    <button onclick="openScheduleModal()" class="btn btn-secondary w-full">
+                        <i class="fas fa-calendar"></i> Schedule Post
+                    </button>
+                    <a href="/profile" class="btn btn-info w-full">
+                        <i class="fas fa-user"></i> View Profile
+                    </a>
+                    <button onclick="openAnalyticsModal()" class="btn btn-warning w-full">
+                        <i class="fas fa-chart-line"></i> Analytics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="glass-card">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: 1.25rem;">
+                        <i class="fas fa-clock"></i>
+                        Recent Activity
+                    </h3>
+                </div>
+                
+                <div id="recentActivity" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: var(--radius-lg); transition: all 0.3s ease;">
+                        <div style="width: 44px; height: 44px; background: var(--success-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem;">Tweet Created</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">2 minutes ago</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: var(--radius-lg); transition: all 0.3s ease;">
+                        <div style="width: 44px; height: 44px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem;">Image Generated</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">5 minutes ago</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: var(--radius-lg); transition: all 0.3s ease;">
+                        <div style="width: 44px; height: 44px; background: var(--warning-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                            <i class="fas fa-share"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem;">Tweet Published</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">1 hour ago</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <a href="/profile" style="color: #667eea; font-size: 0.875rem; text-decoration: none; font-weight: 600;">
+                        View all activity <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Content Section -->
+    <section style="margin-top: 4rem;">
+        <div class="glass-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-folder"></i>
+                    My Content
+                </h2>
+                <div style="display: flex; gap: 1rem;">
+                    <select class="form-control" style="width: 150px;" id="contentFilter">
+                        <option value="all">All Content</option>
+                        <option value="published">Published</option>
+                        <option value="drafts">Drafts</option>
+                        <option value="with-images">With Images</option>
+                    </select>
+                    <button onclick="refreshContent()" class="btn btn-secondary">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <div id="userContent" style="display: grid; gap: 1.5rem;">
+                <!-- User's content will be loaded here -->
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>No content yet. Create your first tweet above!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    let currentContentId = null;
+
+    // Tweet Generator Form Handler
+    document.getElementById('tweetGeneratorForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = this.querySelector('button[type="submit"]');
+        const btnText = btn.querySelector('.btn-text');
+        const loading = btn.querySelector('.loading');
+        
+        const formData = {
+            prompt: `Title: ${document.getElementById('tweetTitle').value}\n\nDescription: ${document.getElementById('tweetPrompt').value}`,
+            tone: document.getElementById('tweetTone').value,
+            length: document.getElementById('tweetLength').value,
+            category: document.getElementById('tweetCategory').value,
+            include_hashtags: document.getElementById('includeHashtags').checked,
+            include_emojis: document.getElementById('includeEmojis').checked,
+            generate_image: document.getElementById('generateImage').checked
+        };
+        
+        btnText.style.display = 'none';
+        loading.style.display = 'inline-block';
+        btn.disabled = true;
+        
+        try {
+            const response = await fetch('/generate-tweet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('generatedTweetText').textContent = result.tweet;
+                document.getElementById('characterCount').textContent = result.tweet.length;
+                currentContentId = result.content_id;
+                
+                if (result.image_url && formData.generate_image) {
+                    document.getElementById('generatedImageDisplay').src = result.image_url;
+                    document.getElementById('generatedImageContainer').style.display = 'block';
+                } else {
+                    document.getElementById('generatedImageContainer').style.display = 'none';
+                }
+                
+                document.getElementById('generatedContent').style.display = 'block';
+                document.getElementById('generatedContent').scrollIntoView({ behavior: 'smooth' });
+                
+                showNotification('Tweet generated successfully!', 'success');
+                updateStats();
+                
+                if (document.getElementById('autoSave').checked) {
+                    saveAsDraft();
+                }
+            } else {
+                showNotification(result.message || 'Failed to generate tweet', 'error');
+            }
+        } catch (error) {
+            showNotification('Network error. Please try again.', 'error');
+        } finally {
+            btnText.style.display = 'inline';
+            loading.style.display = 'none';
+            btn.disabled = false;
+        }
+    });
+
+    // Action Functions
+    function copyGeneratedTweet() {
+        const tweet = document.getElementById('generatedTweetText').textContent;
+        navigator.clipboard.writeText(tweet).then(() => {
+            showNotification('Tweet copied to clipboard!', 'success');
+        }).catch(() => {
+            showNotification('Failed to copy tweet', 'error');
+        });
+    }
+
+    function saveAsDraft() {
+        showNotification('Tweet saved as draft!', 'success');
+        updateStats();
+        refreshContent();
+    }
+
+    async function publishTweet() {
+        if (!currentContentId) {
+            showNotification('No content to publish', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/post-tweet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content_id: currentContentId
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification('Tweet published successfully!', 'success');
+                updateStats();
+                refreshContent();
+            } else {
+                showNotification(result.message || 'Failed to publish tweet', 'error');
+            }
+        } catch (error) {
+            showNotification('Network error. Please try again.', 'error');
+        }
+    }
+
+    function regenerateTweet() {
+        document.getElementById('tweetGeneratorForm').dispatchEvent(new Event('submit'));
+    }
+
+    function editTweet() {
+        const currentTweet = document.getElementById('generatedTweetText').textContent;
+        const newTweet = prompt('Edit your tweet:', currentTweet);
+        if (newTweet && newTweet !== currentTweet) {
+            document.getElementById('generatedTweetText').textContent = newTweet;
+            document.getElementById('characterCount').textContent = newTweet.length;
+            showNotification('Tweet updated!', 'success');
+        }
+    }
+
+    function openTemplateModal() {
+        showNotification('Template feature coming soon!', 'info');
+    }
+
+    function openScheduleModal() {
+        showNotification('Scheduling feature coming soon!', 'info');
+    }
+
+    function openAnalyticsModal() {
+        showNotification('Analytics feature coming soon!', 'info');
+    }
+
+    // Update Stats
+    function updateStats() {
+        const totalContent = Math.floor(Math.random() * 50) + 10;
+        const publishedContent = Math.floor(totalContent * 0.7);
+        const generatedImages = Math.floor(totalContent * 0.6);
+        
+        document.getElementById('totalContent').textContent = totalContent;
+        document.getElementById('publishedContent').textContent = publishedContent;
+        document.getElementById('generatedImages').textContent = generatedImages;
+    }
+
+    function refreshContent() {
+        // Simulate loading user content
+        const contentDiv = document.getElementById('userContent');
+        contentDiv.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <div class="loading" style="margin: 0 auto 1rem;"></div>
+                <p>Loading your content...</p>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            contentDiv.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>Your content will appear here after you create some tweets!</p>
+                </div>
+            `;
+        }, 1500);
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        updateStats();
+        
+        // Content filter handler
+        document.getElementById('contentFilter').addEventListener('change', function() {
+            refreshContent();
+        });
+    });
+</script>
+{% endblock %}

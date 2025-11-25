@@ -1,0 +1,406 @@
+{% extends "../templates/base.html" %}
+
+{% block title %}User Dashboard - TweetAI Pro{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- User Welcome Section -->
+    <section style="margin-bottom: 3rem;">
+        <div class="glass-card hover-lift" style="background: var(--primary-gradient); color: white; border: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
+                <div style="display: flex; align-items: center; gap: 2rem;">
+                    <div class="user-avatar xl hover-lift" style="background: rgba(255,255,255,0.2);">{{ current_user.username[0].upper() }}</div>
+                    <div>
+                        <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem;">
+                            <i class="fas fa-user"></i>
+                            Welcome, {{ current_user.username }}!
+                        </h1>
+                        <p style="font-size: 1.1rem; opacity: 0.9; margin-bottom: 1rem;">
+                            Create amazing tweets and images with AI assistance
+                        </p>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem 1rem; border-radius: var(--radius-lg); font-size: 0.875rem;">
+                                <i class="fas fa-user"></i> User ID: {{ current_user.id }}
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem 1rem; border-radius: var(--radius-lg); font-size: 0.875rem;">
+                                <i class="fas fa-clock"></i> Last login: <span id="lastLoginTime">Just now</span>
+                            </div>
+                            <div class="status-indicator-container" style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem 1rem; border-radius: var(--radius-lg); font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="status-indicator online"></div>
+                                <span>Online</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <button onclick="refreshUserData()" class="btn btn-secondary hover-lift">
+                        <i class="fas fa-sync-alt"></i> Refresh Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real-time User Stats -->
+    <section style="margin-bottom: 3rem;">
+        <div class="grid grid-cols-4" style="gap: 2rem;">
+            <div class="stat-card hover-lift" id="totalTweetsCard">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-number" id="userTotalTweets">0</div>
+                <div class="stat-label">My Tweets</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +<span id="tweetsGrowth">5</span> this week
+                </div>
+            </div>
+            
+            <div class="stat-card hover-lift" id="publishedTweetsCard">
+                <div class="stat-icon" style="background: var(--success-gradient);">
+                    <i class="fas fa-share"></i>
+                </div>
+                <div class="stat-number" id="userPublishedTweets">0</div>
+                <div class="stat-label">Published</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +<span id="publishedGrowth">3</span> this week
+                </div>
+            </div>
+            
+            <div class="stat-card hover-lift" id="generatedImagesCard">
+                <div class="stat-icon" style="background: var(--warning-gradient);">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="stat-number" id="userGeneratedImages">0</div>
+                <div class="stat-label">Images Created</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +<span id="imagesGrowth">2</span> this week
+                </div>
+            </div>
+            
+            <div class="stat-card hover-lift" id="engagementCard">
+                <div class="stat-icon" style="background: var(--info-gradient);">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="stat-number" id="userEngagement">95%</div>
+                <div class="stat-label">Engagement</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +<span id="engagementGrowth">10</span>% this week
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real-time Activity Feed -->
+    <section style="margin-bottom: 3rem;">
+        <div class="glass-card hover-lift">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-activity"></i>
+                    Real-time Activity Feed
+                </h2>
+                <div class="badge badge-success">
+                    <i class="fas fa-circle" style="animation: pulse 2s infinite;"></i> Live
+                </div>
+            </div>
+            <div id="userActivityFeed" style="height: 150px; overflow-y: auto; background: var(--bg-primary); padding: 1rem; border-radius: var(--radius-lg); font-size: 0.875rem;">
+                <!-- Real-time activity will appear here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <div class="grid grid-cols-3" style="gap: 2rem; align-items: start;">
+        <!-- Tweet Creator -->
+        <div style="grid-column: span 2;">
+            <div class="glass-card hover-lift">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-magic"></i>
+                        AI Tweet & Image Creator
+                    </h2>
+                    <div class="badge badge-success">
+                        <i class="fas fa-bolt"></i> AI Powered
+                    </div>
+                </div>
+                
+                <form id="tweetCreatorForm">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-heading"></i> Tweet Title
+                        </label>
+                        <input 
+                            type="text" 
+                            id="tweetTitle" 
+                            class="form-control hover-input" 
+                            placeholder="Enter your tweet title or main topic..."
+                            required
+                        />
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">
+                            This will be the main focus of your tweet
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-edit"></i> Detailed Description
+                        </label>
+                        <div class="text-container adjustable-text hover-textarea" 
+                             contenteditable="true" 
+                             id="tweetDescription"
+                             placeholder="Describe your topic in detail. Be specific for better AI results..."
+                             style="min-height: 120px;">
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">
+                            Drag the corner to resize this text area. Be detailed for better results.
+                        </small>
+                    </div>
+                    
+                    <div class="grid grid-cols-3" style="gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label class="form-label">Tone</label>
+                            <select class="form-control hover-input" id="tweetTone">
+                                <option value="professional">Professional</option>
+                                <option value="casual">Casual</option>
+                                <option value="humorous">Humorous</option>
+                                <option value="inspirational">Inspirational</option>
+                                <option value="educational">Educational</option>
+                                <option value="promotional">Promotional</option>
+                                <option value="friendly">Friendly</option>
+                                <option value="authoritative">Authoritative</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Length</label>
+                            <select class="form-control hover-input" id="tweetLength">
+                                <option value="short">Short (< 100 chars)</option>
+                                <option value="medium" selected>Medium (100-200 chars)</option>
+                                <option value="long">Long (200-280 chars)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Category</label>
+                            <select class="form-control hover-input" id="tweetCategory">
+                                <option value="general">General</option>
+                                <option value="tech">Technology</option>
+                                <option value="business">Business</option>
+                                <option value="lifestyle">Lifestyle</option>
+                                <option value="education">Education</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="health">Health & Fitness</option>
+                                <option value="travel">Travel</option>
+                                <option value="food">Food & Cooking</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="hover-card" style="background: var(--bg-primary); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 2rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-weight: 600;">
+                            <i class="fas fa-cog"></i> Generation Options
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <label class="hover-checkbox" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 500; color: var(--text-secondary);">
+                                <input type="checkbox" id="includeHashtags" checked style="transform: scale(1.2);">
+                                <i class="fas fa-hashtag"></i> Include hashtags
+                            </label>
+                            <label class="hover-checkbox" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 500; color: var(--text-secondary);">
+                                <input type="checkbox" id="includeEmojis" checked style="transform: scale(1.2);">
+                                <i class="fas fa-smile"></i> Add emojis
+                            </label>
+                            <label class="hover-checkbox" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 500; color: var(--text-secondary);">
+                                <input type="checkbox" id="generateImage" checked style="transform: scale(1.2);">
+                                <i class="fas fa-image"></i> Generate image
+                            </label>
+                            <label class="hover-checkbox" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 500; color: var(--text-secondary);">
+                                <input type="checkbox" id="autoSave" checked style="transform: scale(1.2);">
+                                <i class="fas fa-save"></i> Auto-save draft
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-full hover-lift" style="padding: 1.25rem; font-size: 1rem;">
+                        <span class="btn-text">
+                            <i class="fas fa-wand-magic-sparkles"></i> Generate Tweet & Image with AI
+                        </span>
+                        <span class="loading" style="display: none;"></span>
+                    </button>
+                </form>
+                
+                <!-- Generated Content Display -->
+                <div id="generatedContent" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-light);">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem;">
+                        <i class="fas fa-sparkles"></i> Generated Content
+                    </h3>
+                    
+                    <!-- Tweet Preview -->
+                    <div class="hover-card" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: var(--radius-lg); padding: 2rem; border-left: 4px solid #667eea; margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="width: 40px; height: 40px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                <i class="fas fa-twitter"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-primary);">{{ current_user.username }}</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">@{{ current_user.username.lower() }}</div>
+                            </div>
+                        </div>
+                        <div class="text-container adjustable-text hover-textarea" 
+                             contenteditable="true" 
+                             id="generatedTweetText"
+                             style="background: white; border: 2px solid var(--border-light); min-height: 80px; font-size: 1.1rem; font-weight: 500; color: var(--text-primary); line-height: 1.6;">
+                        </div>
+                        <div style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: between; align-items: center;">
+                            <span><span id="characterCount">0</span>/280 characters</span>
+                            <span style="margin-left: auto;">
+                                <i class="fas fa-info-circle"></i> You can edit the tweet by clicking in the text area
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Generated Image -->
+                    <div id="generatedImageContainer" style="display: none; margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--text-primary); font-weight: 600;">
+                            <i class="fas fa-image"></i> Generated Image
+                        </h4>
+                        <div class="hover-card" style="background: white; padding: 1rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); text-align: center;">
+                            <img id="generatedImageDisplay" class="hover-image" style="max-width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button onclick="copyGeneratedTweet()" class="btn btn-secondary hover-lift">
+                            <i class="fas fa-copy"></i> Copy Tweet
+                        </button>
+                        <button onclick="saveAsDraft()" class="btn btn-info hover-lift">
+                            <i class="fas fa-save"></i> Save Draft
+                        </button>
+                        <button onclick="publishTweet()" class="btn btn-success hover-lift">
+                            <i class="fas fa-paper-plane"></i> Publish Now
+                        </button>
+                        <button onclick="regenerateTweet()" class="btn btn-warning hover-lift">
+                            <i class="fas fa-redo"></i> Regenerate
+                        </button>
+                        <button onclick="downloadImage()" class="btn btn-dark hover-lift" id="downloadImageBtn" style="display: none;">
+                            <i class="fas fa-download"></i> Download Image
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Quick Actions -->
+            <div class="glass-card hover-lift" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: 1.25rem;">
+                        <i class="fas fa-bolt"></i>
+                        Quick Actions
+                    </h3>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button onclick="openTemplateModal()" class="btn btn-primary w-full hover-lift">
+                        <i class="fas fa-file-alt"></i> Use Template
+                    </button>
+                    <button onclick="openScheduleModal()" class="btn btn-secondary w-full hover-lift">
+                        <i class="fas fa-calendar"></i> Schedule Post
+                    </button>
+                    <button onclick="openAnalyticsModal()" class="btn btn-info w-full hover-lift">
+                        <i class="fas fa-chart-line"></i> My Analytics
+                    </button>
+                    <button onclick="clearForm()" class="btn btn-warning w-full hover-lift">
+                        <i class="fas fa-eraser"></i> Clear Form
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="glass-card hover-lift">
+                <div class="card-header">
+                    <h3 class="card-title" style="font-size: 1.25rem;">
+                        <i class="fas fa-clock"></i>
+                        My Recent Activity
+                    </h3>
+                </div>
+                
+                <div id="userRecentActivity" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="hover-card" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: var(--radius-lg);">
+                        <div style="width: 44px; height: 44px; background: var(--success-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem;">Tweet Created</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">Just now</div>
+                        </div>
+                    </div>
+                    
+                    <div class="hover-card" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: var(--radius-lg);">
+                        <div style="width: 44px; height: 44px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem;">Image Generated</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">5 minutes ago</div>
+                        </div>
+                    </div>
+                    
+                    <div class="hover-card" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: var(--radius-lg);">
+                        <div style="width: 44px; height: 44px; background: var(--warning-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                            <i class="fas fa-share"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem;">Tweet Published</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">1 hour ago</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button onclick="viewAllActivity()" class="hover-link" style="color: #667eea; font-size: 0.875rem; background: none; border: none; cursor: pointer; font-weight: 600;">
+                        View all activity <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Content Section -->
+    <section style="margin-top: 4rem;">
+        <div class="glass-card hover-lift">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-folder"></i>
+                    My Content
+                </h2>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <select class="form-control hover-input" style="width: 150px;" id="userContentFilter">
+                        <option value="all">All Content</option>
+                        <option value="published">Published</option>
+                        <option value="drafts">Drafts</option>
+                        <option value="with-images">With Images</option>
+                    </select>
+                    <button onclick="refreshUserContent()" class="btn btn-secondary hover-lift">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                    <button onclick="exportUserContent()" class="btn btn-success hover-lift">
+                        <i class="fas fa-download"></i> Export My Data
+                    </button>
+                </div>
+            </div>
+            
+            <div id="userContentGrid" style="display: grid; gap: 1.5rem;">
+                <!-- User's content will be loaded here -->
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>No content yet. Create your first tweet above!</p>
+                    <button onclick="scrollToCreator()" class="btn btn-primary hover-lift" style="margin-top: 1rem;">
+                        <i class="fas fa-plus"></i> Create Your First Tweet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="/user/static/js/user.js"></script>
+{% endblock %}

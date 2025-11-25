@@ -1,0 +1,584 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - TweetAI Pro{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- User Header -->
+    <section style="margin-bottom: 3rem;">
+        <div class="glass-card" style="background: var(--primary-gradient); color: white; border: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
+                <div>
+                    <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 0.5rem;">
+                        <i class="fas fa-rocket"></i>
+                        Welcome, {{ current_user.username }}!
+                    </h1>
+                    <p style="font-size: 1.1rem; opacity: 0.9; margin-bottom: 1rem;">
+                        Create amazing tweets and images with AI-powered tools
+                    </p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem 1rem; border-radius: var(--radius-lg); font-size: 0.875rem;">
+                            <i class="fas fa-clock"></i> Last active: <span id="lastActive">Just now</span>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem 1rem; border-radius: var(--radius-lg); font-size: 0.875rem;">
+                            <i class="fas fa-user"></i> User: {{ current_user.username }}
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem 1rem; border-radius: var(--radius-lg); font-size: 0.875rem;">
+                            <i class="fas fa-file-alt"></i> Your Posts: <span id="userPostCount">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <button onclick="refreshUserData()" class="btn btn-secondary hover-lift">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real-time User Stats -->
+    <section style="margin-bottom: 3rem;">
+        <div class="grid grid-cols-4" style="gap: 2rem;">
+            <div class="stat-card hover-lift" id="totalPostsCard">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-number" id="realTimeTotalPosts">0</div>
+                <div class="stat-label">Total Posts</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +<span id="postsGrowth">0</span> this week
+                </div>
+            </div>
+            
+            <div class="stat-card hover-lift" id="publishedPostsCard">
+                <div class="stat-icon" style="background: var(--success-gradient);">
+                    <i class="fas fa-share"></i>
+                </div>
+                <div class="stat-number" id="realTimePublishedPosts">0</div>
+                <div class="stat-label">Published</div>
+                <div style="font-size: 0.75rem; color: #4ade80; margin-top: 0.5rem;">
+                    <i class="fas fa-arrow-up"></i> +<span id="publishedGrowth">0</span> today
+                </div>
+            </div>
+            
+            <div class="stat-card hover-lift" id="draftPostsCard">
+                <div class="stat-icon" style="background: var(--warning-gradient);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number" id="realTimeDraftPosts">0</div>
+                <div class="stat-label">Drafts</div>
+                <div style="font-size: 0.75rem; color: #f59e0b; margin-top: 0.5rem;">
+                    <i class="fas fa-edit"></i> Ready to publish
+                </div>
+            </div>
+            
+            <div class="stat-card hover-lift" id="imagesGeneratedCard">
+                <div class="stat-icon" style="background: var(--info-gradient);">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="stat-number" id="realTimeImagesGenerated">0</div>
+                <div class="stat-label">Images Created</div>
+                <div style="font-size: 0.75rem; color: #3b82f6; margin-top: 0.5rem;">
+                    <i class="fas fa-palette"></i> AI-generated
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real-time Activity Feed -->
+    <section style="margin-bottom: 3rem;">
+        <div class="glass-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-activity"></i>
+                    Your Recent Activity
+                </h2>
+                <div class="badge badge-success">
+                    <i class="fas fa-circle" style="animation: pulse 2s infinite;"></i> Live
+                </div>
+            </div>
+            <div id="userActivityFeed" style="height: 150px; overflow-y: auto; font-size: 0.875rem; background: var(--bg-primary); padding: 1rem; border-radius: var(--radius-lg);">
+                <!-- User activity will appear here -->
+                <div style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                    <i class="fas fa-clock"></i> Your activity will appear here in real-time
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        <button onclick="showTab('create', 'user')" id="createTab" class="tab-btn active hover-lift" data-group="user">
+            <i class="fas fa-plus"></i> Create Tweet & Image
+        </button>
+        <button onclick="showTab('content', 'user')" id="contentTab" class="tab-btn hover-lift" data-group="user">
+            <i class="fas fa-file-alt"></i> My Content (<span id="contentTabCount">0</span>)
+        </button>
+        <button onclick="showTab('templates', 'user')" id="templatesTab" class="tab-btn hover-lift" data-group="user">
+            <i class="fas fa-layer-group"></i> Templates
+        </button>
+        <button onclick="showTab('analytics', 'user')" id="analyticsTab" class="tab-btn hover-lift" data-group="user">
+            <i class="fas fa-chart-bar"></i> My Analytics
+        </button>
+        <button onclick="showTab('settings', 'user')" id="settingsTab" class="tab-btn hover-lift" data-group="user">
+            <i class="fas fa-cog"></i> Settings
+        </button>
+    </div>
+
+    <!-- Create Tweet & Image Tab -->
+    <div id="createContent" class="tab-content active" data-group="user">
+        <div class="glass-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-magic"></i>
+                    AI Tweet & Image Creator
+                </h2>
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="clearForm()" class="btn btn-secondary hover-lift">
+                        <i class="fas fa-eraser"></i> Clear
+                    </button>
+                    <button onclick="saveAsDraft()" class="btn btn-warning hover-lift">
+                        <i class="fas fa-save"></i> Save Draft
+                    </button>
+                    <button onclick="useTemplate()" class="btn btn-info hover-lift">
+                        <i class="fas fa-layer-group"></i> Use Template
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2" style="gap: 3rem;">
+                <!-- Input Section -->
+                <div>
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">
+                            <i class="fas fa-lightbulb"></i> What's on your mind?
+                        </label>
+                        <div class="text-container adjustable-text" style="min-height: 120px;">
+                            <textarea id="promptInput" placeholder="Enter your idea, topic, or message here... The AI will create an engaging tweet and matching image for you!" style="width: 100%; height: 100%; border: none; outline: none; resize: none; font-size: 1rem; line-height: 1.6;"></textarea>
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.5rem; display: block;">
+                            <i class="fas fa-info-circle"></i> This text area is resizable. Drag the corner to adjust size.
+                        </small>
+                    </div>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">
+                            <i class="fas fa-sliders-h"></i> Advanced Options
+                        </label>
+                        <div style="display: grid; gap: 1rem;">
+                            <div>
+                                <label style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;">Tweet Style:</label>
+                                <select id="tweetStyle" class="form-control">
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual & Fun</option>
+                                    <option value="inspirational">Inspirational</option>
+                                    <option value="humorous">Humorous</option>
+                                    <option value="informative">Informative</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;">Image Style:</label>
+                                <select id="imageStyle" class="form-control">
+                                    <option value="modern">Modern & Clean</option>
+                                    <option value="artistic">Artistic</option>
+                                    <option value="minimalist">Minimalist</option>
+                                    <option value="vibrant">Vibrant & Colorful</option>
+                                    <option value="professional">Professional</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 1rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    <input type="checkbox" id="includeHashtags" checked>
+                                    Include hashtags
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    <input type="checkbox" id="includeEmojis" checked>
+                                    Include emojis
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    <input type="checkbox" id="generateImage" checked>
+                                    Generate image
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="generateTweetFromForm()" id="generateBtn" class="btn btn-primary hover-lift" style="width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 600;">
+                        <i class="fas fa-magic"></i> Generate Tweet & Image
+                    </button>
+                </div>
+                
+                <!-- Preview Section -->
+                <div>
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">
+                            <i class="fas fa-eye"></i> Live Preview
+                        </label>
+                        
+                        <!-- Tweet Preview -->
+                        <div id="tweetPreview" class="tweet-preview" style="background: white; border: 2px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem; min-height: 120px;">
+                            <div id="tweetPreviewContent" style="text-align: center; color: var(--text-muted);">
+                                <i class="fas fa-twitter" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                <p style="margin: 0; opacity: 0.6;">Your generated tweet will appear here</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="imagePreview" style="background: var(--bg-secondary); border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 2rem; text-align: center; min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                            <div id="imagePreviewContent">
+                                <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; color: var(--text-muted);"></i>
+                                <p style="margin: 0; opacity: 0.6; color: var(--text-muted);">Generated image will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div id="previewActions" style="display: none; gap: 1rem;">
+                        <button onclick="publishTweet()" class="btn btn-success hover-lift" style="flex: 1;">
+                            <i class="fas fa-share"></i> Publish Tweet
+                        </button>
+                        <button onclick="saveDraft()" class="btn btn-warning hover-lift" style="flex: 1;">
+                            <i class="fas fa-save"></i> Save as Draft
+                        </button>
+                        <button onclick="regenerate()" class="btn btn-secondary hover-lift">
+                            <i class="fas fa-redo"></i> Regenerate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Content Tab -->
+    <div id="contentContent" class="tab-content" data-group="user">
+        <div class="glass-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-file-alt"></i>
+                    My Content Library
+                </h2>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <input type="text" id="myContentSearch" class="form-control" placeholder="Search my content..." style="width: 250px;">
+                    <select id="myContentFilter" class="form-control" style="width: 150px;">
+                        <option value="all">All Content</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Drafts</option>
+                        <option value="with-images">With Images</option>
+                    </select>
+                    <button onclick="exportMyContent()" class="btn btn-success hover-lift">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            
+            <div id="myContentGrid" style="display: grid; gap: 1.5rem;">
+                <!-- User's content will be loaded here dynamically -->
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No content yet</p>
+                    <p style="font-size: 0.875rem;">Create your first tweet to see it here!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Tab -->
+    <div id="templatesContent" class="tab-content" data-group="user">
+        <div class="glass-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-layer-group"></i>
+                    Tweet Templates
+                </h2>
+                <button onclick="createCustomTemplate()" class="btn btn-primary hover-lift">
+                    <i class="fas fa-plus"></i> Create Custom Template
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-3" style="gap: 2rem;">
+                <!-- Template Cards -->
+                <div class="card template-card hover-lift" onclick="useTemplate('announcement')">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <div style="width: 60px; height: 60px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                            <i class="fas fa-bullhorn" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Announcement</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">Perfect for sharing news, updates, or important information</p>
+                    </div>
+                    <div class="text-container" style="background: var(--bg-primary); font-size: 0.75rem; color: var(--text-secondary); min-height: 60px;">
+                        🎉 Exciting news! [Your announcement here] 
+                        
+                        #News #Update #Announcement
+                    </div>
+                </div>
+                
+                <div class="card template-card hover-lift" onclick="useTemplate('question')">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <div style="width: 60px; height: 60px; background: var(--success-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                            <i class="fas fa-question" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Question</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">Engage your audience with thought-provoking questions</p>
+                    </div>
+                    <div class="text-container" style="background: var(--bg-primary); font-size: 0.75rem; color: var(--text-secondary); min-height: 60px;">
+                        🤔 What's your take on [topic]? 
+                        
+                        I'd love to hear your thoughts! 
+                        
+                        #Question #Discussion
+                    </div>
+                </div>
+                
+                <div class="card template-card hover-lift" onclick="useTemplate('tip')">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <div style="width: 60px; height: 60px; background: var(--warning-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                            <i class="fas fa-lightbulb" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Tip/Advice</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">Share valuable tips and advice with your followers</p>
+                    </div>
+                    <div class="text-container" style="background: var(--bg-primary); font-size: 0.75rem; color: var(--text-secondary); min-height: 60px;">
+                        💡 Pro tip: [Your valuable advice here]
+                        
+                        This simple trick can [benefit]!
+                        
+                        #Tips #Advice #ProTip
+                    </div>
+                </div>
+                
+                <div class="card template-card hover-lift" onclick="useTemplate('motivation')">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <div style="width: 60px; height: 60px; background: var(--info-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                            <i class="fas fa-rocket" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Motivational</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">Inspire and motivate your audience</p>
+                    </div>
+                    <div class="text-container" style="background: var(--bg-primary); font-size: 0.75rem; color: var(--text-secondary); min-height: 60px;">
+                        🚀 Remember: [Motivational message]
+                        
+                        You've got this! 💪
+                        
+                        #Motivation #Inspiration #Success
+                    </div>
+                </div>
+                
+                <div class="card template-card hover-lift" onclick="useTemplate('behind-scenes')">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <div style="width: 60px; height: 60px; background: var(--danger-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                            <i class="fas fa-camera" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Behind the Scenes</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">Share personal insights and behind-the-scenes content</p>
+                    </div>
+                    <div class="text-container" style="background: var(--bg-primary); font-size: 0.75rem; color: var(--text-secondary); min-height: 60px;">
+                        📸 Behind the scenes: [What you're working on]
+                        
+                        The process is just as important as the result!
+                        
+                        #BehindTheScenes #Process
+                    </div>
+                </div>
+                
+                <div class="card template-card hover-lift" onclick="useTemplate('gratitude')">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <div style="width: 60px; height: 60px; background: var(--dark-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                            <i class="fas fa-heart" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Gratitude</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">Express appreciation and gratitude</p>
+                    </div>
+                    <div class="text-container" style="background: var(--bg-primary); font-size: 0.75rem; color: var(--text-secondary); min-height: 60px;">
+                        🙏 Grateful for [what you're thankful for]
+                        
+                        Thank you to everyone who [specific appreciation]!
+                        
+                        #Grateful #ThankYou #Appreciation
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Analytics Tab -->
+    <div id="analyticsContent" class="tab-content" data-group="user">
+        <div class="glass-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-bar"></i>
+                    My Performance Analytics
+                </h2>
+                <div style="display: flex; gap: 1rem;">
+                    <select class="form-control" style="width: 150px;" id="userAnalyticsTimeframe">
+                        <option>Last 7 days</option>
+                        <option>Last 30 days</option>
+                        <option>All time</option>
+                    </select>
+                    <button onclick="exportUserAnalytics()" class="btn btn-success hover-lift">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </div>
+            
+            <!-- User Analytics Overview -->
+            <div class="grid grid-cols-3" style="gap: 2rem; margin-bottom: 3rem;">
+                <div class="card text-center hover-lift" style="background: var(--primary-gradient); color: white;">
+                    <div style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;" id="userEngagementRate">0%</div>
+                    <div style="opacity: 0.9; font-weight: 500;">Engagement Rate</div>
+                    <div style="font-size: 0.875rem; opacity: 0.8; margin-top: 0.5rem;">
+                        <i class="fas fa-arrow-up"></i> +0% vs last period
+                    </div>
+                </div>
+                <div class="card text-center hover-lift" style="background: var(--success-gradient); color: white;">
+                    <div style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;" id="userReachCount">0</div>
+                    <div style="opacity: 0.9; font-weight: 500;">Total Reach</div>
+                    <div style="font-size: 0.875rem; opacity: 0.8; margin-top: 0.5rem;">
+                        <i class="fas fa-arrow-up"></i> +0% vs last period
+                    </div>
+                </div>
+                <div class="card text-center hover-lift" style="background: var(--warning-gradient); color: white;">
+                    <div style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;" id="userBestTime">12:00 PM</div>
+                    <div style="opacity: 0.9; font-weight: 500;">Best Posting Time</div>
+                    <div style="font-size: 0.875rem; opacity: 0.8; margin-top: 0.5rem;">
+                        <i class="fas fa-clock"></i> Based on your data
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content Performance -->
+            <div class="card hover-lift">
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2rem;">
+                    <i class="fas fa-trophy"></i> Your Top Performing Content
+                </h3>
+                
+                <div id="topPerformingContent" style="display: grid; gap: 1rem;">
+                    <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                        <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No analytics data yet</p>
+                        <p style="font-size: 0.875rem;">Publish some content to see your performance metrics!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settingsContent" class="tab-content" data-group="user">
+        <div class="glass-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-cog"></i>
+                    User Settings & Preferences
+                </h2>
+                <button onclick="saveUserSettings()" class="btn btn-success hover-lift">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+            
+            <div style="display: grid; gap: 2rem;">
+                <!-- Profile Settings -->
+                <div class="card hover-lift">
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 2rem;">
+                        <i class="fas fa-user"></i> Profile Information
+                    </h3>
+                    
+                    <div class="grid grid-cols-2" style="gap: 2rem;">
+                        <div>
+                            <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Username</label>
+                            <input type="text" class="form-control" value="{{ current_user.username }}" readonly style="background: var(--bg-secondary);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Email</label>
+                            <input type="email" class="form-control" value="{{ current_user.email }}" readonly style="background: var(--bg-secondary);">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 2rem;">
+                        <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Bio</label>
+                        <div class="text-container adjustable-text" style="min-height: 80px;">
+                            <textarea id="userBio" placeholder="Tell us about yourself..." style="width: 100%; height: 100%; border: none; outline: none; resize: none; font-size: 0.875rem; line-height: 1.6;"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Preferences -->
+                <div class="card hover-lift">
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 2rem;">
+                        <i class="fas fa-sliders-h"></i> Content Preferences
+                    </h3>
+                    
+                    <div class="grid grid-cols-2" style="gap: 2rem;">
+                        <div>
+                            <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">Default Tweet Style</label>
+                            <select id="defaultTweetStyle" class="form-control">
+                                <option value="professional">Professional</option>
+                                <option value="casual">Casual & Fun</option>
+                                <option value="inspirational">Inspirational</option>
+                                <option value="humorous">Humorous</option>
+                                <option value="informative">Informative</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">Default Image Style</label>
+                            <select id="defaultImageStyle" class="form-control">
+                                <option value="modern">Modern & Clean</option>
+                                <option value="artistic">Artistic</option>
+                                <option value="minimalist">Minimalist</option>
+                                <option value="vibrant">Vibrant & Colorful</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 2rem;">
+                        <label style="display: block; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">Content Options</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                <input type="checkbox" id="autoSaveDrafts" checked>
+                                Auto-save drafts
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                <input type="checkbox" id="enableNotifications" checked>
+                                Enable notifications
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                <input type="checkbox" id="showAnalytics" checked>
+                                Show analytics
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                <input type="checkbox" id="enableRealTimeUpdates" checked>
+                                Real-time updates
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Account Security -->
+                <div class="card hover-lift">
+                    <h3 style="color: var(--text-primary); font-size: 1.25rem; font-weight: 600; margin-bottom: 2rem;">
+                        <i class="fas fa-shield-alt"></i> Account Security
+                    </h3>
+                    
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button onclick="changePassword()" class="btn btn-warning hover-lift">
+                            <i class="fas fa-key"></i> Change Password
+                        </button>
+                        <button onclick="enable2FA()" class="btn btn-info hover-lift">
+                            <i class="fas fa-mobile-alt"></i> Enable 2FA
+                        </button>
+                        <button onclick="viewLoginHistory()" class="btn btn-secondary hover-lift">
+                            <i class="fas fa-history"></i> Login History
+                        </button>
+                        <button onclick="downloadData()" class="btn btn-success hover-lift">
+                            <i class="fas fa-download"></i> Download My Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/user.js"></script>
+{% endblock %}
